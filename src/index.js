@@ -1,17 +1,62 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import './index.css';
-import App from './App';
-import reportWebVitals from './reportWebVitals';
+import React from "react";
+import { render } from "react-dom";
+import { MsalProvider, useMsalAuthentication } from "@azure/msal-react";
+import { Configuration,  PublicClientApplication } from "@azure/msal-browser";
+import {
+  ApolloClient,
+  InMemoryCache,
+  ApolloProvider,
+  useQuery,
+  gql
+} from "@apollo/client";
 
-ReactDOM.render(
-  <React.StrictMode>
+// MSAL configuration
+const configuration: Configuration = {
+  auth: {
+      clientId: "client-id"
+  }
+};
+
+const pca = new PublicClientApplication(configuration);
+
+// Component
+const AppProvider = () => (
+  <MsalProvider instance={pca}>
+  <ApolloProvider client={client}>
     <App />
-  </React.StrictMode>,
-  document.getElementById('root')
+  </ApolloProvider>
+  </MsalProvider>
 );
 
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals();
+const client = new ApolloClient({
+  uri: "https://centricec-graphql-func.azurewebsites.net/api/graphql",
+  cache: new InMemoryCache()
+});
+
+function GraphReturn() {
+  const { loading, error, data } = useQuery(gql`{hello}`);
+
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p>Error :(</p>;
+
+  return data => (
+    <div key={data}>
+      <p>
+        {data}
+      </p>
+    </div>
+  );
+}
+
+function App() {
+  const {login, result, error} = useMsalAuthentication("popup");
+
+  return (
+    <div>
+      <h2>React Page w/ Apollo</h2>
+      <GraphReturn />
+    </div>
+  );
+}
+
+render(<AppProvider />,  document.getElementById("root"));
