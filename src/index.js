@@ -10,46 +10,51 @@ import {
   gql
 } from "@apollo/client";
 
-// MSAL configuration
-const configuration: Configuration = {
-  auth: {
-      clientId: "client-id"
-  }
-};
-
-const pca = new PublicClientApplication(configuration);
 
 // Component
 const AppProvider = () => (
-  <MsalProvider instance={pca}>
   <ApolloProvider client={client}>
     <App />
   </ApolloProvider>
-  </MsalProvider>
 );
 
 const client = new ApolloClient({
-  uri: "https://centricec-graphql-func.azurewebsites.net/api/graphql",
+  uri: "https://apollo-example-aysandbox.azurewebsites.net/graphql?code=KPuPL6pdBQfps08Lpr2cUKWrRwYd12x6h6CfDyaj8QaySma2eNqKvg==",
   cache: new InMemoryCache()
 });
 
+client
+  .query({
+    query: gql`
+      query GetMessage {
+        hello
+      }
+    `
+  })
+  .then(result => console.log(result));
+
+  const DEMO_QUERY = gql`
+    query GetMessage {
+      hello
+  }
+`;
+
 function GraphReturn() {
-  const { loading, error, data } = useQuery(gql`{hello}`);
+  const { loading, error, data } = useQuery(DEMO_QUERY);
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error :(</p>;
 
-  return data => (
-    <div key={data}>
-      <p>
-        {data}
-      </p>
-    </div>
-  );
+    return (
+      <div>
+        <p>
+          {data.hello}
+        </p>
+      </div>
+    );
 }
 
 function App() {
-  const {login, result, error} = useMsalAuthentication("popup");
 
   return (
     <div>
@@ -58,5 +63,8 @@ function App() {
     </div>
   );
 }
-
-render(<AppProvider />,  document.getElementById("root"));
+render(
+  <ApolloProvider client={client}>
+        <App />
+  </ApolloProvider>,  document.getElementById('root'),
+);
